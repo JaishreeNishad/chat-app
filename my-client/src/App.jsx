@@ -1,10 +1,11 @@
 import "./App.css";
+import Form from "./modules/Form";
 
 function App() {
   return (
-    <>
-      <h1 className="bg-red-400">hello purvi</h1>
-    </>
+    <div className="bg-blue-100 h-screen">
+      <Form />
+    </div>
   );
 }
 
