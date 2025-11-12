@@ -7,6 +7,8 @@ const Input = ({
   className = "",
   isRequired = false,
   placeholder = "",
+  value = "",
+  onChange = () => {},
 }) => {
   return (
     <div className="w-1/2 mb-3 flex flex-col">
@@ -19,6 +21,8 @@ const Input = ({
       </label>
       <input
         type={type}
+        value={value}
+        onChange={onChange}
         id="first_name"
         className={`bg-gray-50 border border-gray-300 p-1.5 w-full  ${className}`}
         placeholder={placeholder}
