@@ -11,7 +11,7 @@ const Input = ({
   onChange = () => {},
 }) => {
   return (
-    <div className="w-1/2 mb-3 flex flex-col">
+    <div className="w-full mb-3 flex flex-col">
       {" "}
       <label
         for={name}
