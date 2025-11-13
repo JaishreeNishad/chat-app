@@ -1,5 +1,6 @@
 const express = require("express");
 const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const app = express();
 
 //connect db
@@ -59,6 +60,53 @@ app.post("/api/register", async (req, res, next) => {
     return res
       .status(500)
       .send("Internal Server Error: Could not process registration.");
+  }
+});
+
+app.post("/api/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1. Check for missing fields
+    if (!email || !password) {
+      // Use return to stop execution
+      return res.status(400).send("Please fill all required field");
+    } else {
+      const user = await Users.findOne({ email });
+      if (!user) {
+        return res.status(400).send("user email or password is incorrect");
+      } else {
+        const validateUser = await bcryptjs.compare(password, user.password);
+        if (!validateUser) {
+          return res.status(400).send("user email or password is incorrect");
+        } else {
+          const payload = { userId: user.id, email: user.email };
+          const JWT_SECRET_KEY =
+            process.env.JWT_SECRET_KEY || "THIS_IS_A_JWT_SECRET_KEY";
+          jwt.sign(
+            payload,
+            JWT_SECRET_KEY,
+            { expiresIn: 84600 },
+            async (err, token) => {
+              await Users.updateOne(
+                { _id: user._id },
+                {
+                  $set: { token },
+                }
+              );
+              user.save();
+              next();
+            }
+          );
+          res.status(200).json({
+            user: { email: user.email, fullName: user.fullName },
+            token: user.token,
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.log("Registration Error:", error);
   }
 });
 
