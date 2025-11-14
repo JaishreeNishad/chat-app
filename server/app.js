@@ -7,7 +7,8 @@ const app = express();
 require("./dp/connection");
 
 //import files
-const Users = require("./models/Users"); // Assuming this is your Mongoose model
+const Users = require("./models/Users");
+const Conversations = require("./models/Conversations"); // Assuming this is your Mongoose model
 
 // Middleware for parsing request bodies
 app.use(express.urlencoded({ extended: false }));
@@ -107,6 +108,50 @@ app.post("/api/login", async (req, res, next) => {
     }
   } catch (error) {
     console.log("Registration Error:", error);
+  }
+});
+
+app.post("/api/conversation", async (req, res) => {
+  try {
+    const { senderId, receiverId } = req.body;
+    const newConversation = new Conversations({
+      members: [senderId, receiverId],
+    });
+    await newConversation.save();
+    res.status(200).send("Conversation created successfully");
+  } catch (error) {
+    console.log(error, "error");
+  }
+});
+
+app.get("/api/conversation/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    // get all conversations where the user is a member
+    const conversations = await Conversations.find({
+      members: { $in: [userId] },
+    });
+
+    // get data of the other user in each conversation
+    const conversationUserData = await Promise.all(
+      conversations.map(async (conversation) => {
+        const receiverId = conversation.members.find(
+          (member) => member !== userId
+        );
+        const user = await Users.findById(receiverId);
+
+        return {
+          user: { email: user.email, fullName: user.fullName },
+          conversationId: conversation._id,
+        };
+      })
+    );
+
+    res.status(200).json(conversationUserData);
+  } catch (error) {
+    console.log("Error fetching conversations:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
