@@ -11,10 +11,31 @@ const Form = ({ isSignIn = true }) => {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", data);
-    // Add your form submission logic here
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/${isSignIn ? "login" : "register"}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      const resData = await res.json();
+      console.log("data", resData);
+      if (resData.token) {
+        localStorage.setItem("user:token", resData.token);
+        navigate("/");
+      } else {
+        alert(resData);
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+    }
   };
 
   return (
@@ -30,7 +51,7 @@ const Form = ({ isSignIn = true }) => {
         {/* Changed from Form to form (lowercase) to avoid conflict */}
         <form
           className="w-1/2 flex flex-col items-center"
-          onSubmit={handleSubmit}
+          onSubmit={(e) => handleSubmit(e)}
         >
           {!isSignIn && (
             <Input
@@ -68,7 +89,9 @@ const Form = ({ isSignIn = true }) => {
           {isSignIn ? "Didn't have an account?" : "Already have an account?"}
           <span
             className="text-blue-500 cursor-pointer underline ml-1"
-            onClick={() => navigate(`/${isSignIn ? "sign_up" : "sign_in"}`)}
+            onClick={() =>
+              navigate(`/users/${isSignIn ? "sign_up" : "sign_in"}`)
+            }
           >
             {isSignIn ? "Sign up" : "Sign in"}
           </span>

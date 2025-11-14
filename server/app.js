@@ -2,6 +2,7 @@ const express = require("express");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const app = express();
+const cors = require("cors");
 
 //connect db
 require("./dp/connection");
@@ -13,7 +14,8 @@ const Messages = require("./models/Messages"); // Assuming this is your Mongoose
 
 // Middleware for parsing request bodies
 app.use(express.urlencoded({ extended: false }));
-app.use(express.json()); // **IMPORTANT: Add this to parse JSON body from Postman**
+app.use(express.json());
+app.use(cors()); // **IMPORTANT: Add this to parse JSON body from Postman**
 
 const port = process.env.PORT || 8000;
 
@@ -97,13 +99,12 @@ app.post("/api/login", async (req, res, next) => {
                 }
               );
               user.save();
-              next();
+              return res.status(200).json({
+                user: { email: user.email, fullName: user.fullName },
+                token: token,
+              });
             }
           );
-          res.status(200).json({
-            user: { email: user.email, fullName: user.fullName },
-            token: user.token,
-          });
         }
       }
     }
