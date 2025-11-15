@@ -24,14 +24,16 @@ const Form = ({ isSignIn = true }) => {
           body: JSON.stringify(data),
         }
       );
-
-      const resData = await res.json();
-      console.log("data", resData);
-      if (resData.token) {
-        localStorage.setItem("user:token", resData.token);
-        navigate("/");
+      if (res.status === 400) {
+        alert("Invalid Credential");
       } else {
-        alert(resData);
+        const resData = await res.json();
+        console.log("data", resData);
+        if (resData.token) {
+          localStorage.setItem("user:token", resData.token);
+          localStorage.setItem("user:detail", JSON.stringify(resData.user));
+          navigate("/");
+        }
       }
     } catch (error) {
       console.error("Submit error:", error);
