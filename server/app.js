@@ -148,7 +148,11 @@ app.get("/api/conversations/:userId", async (req, res) => {
         const user = await Users.findById(receiverId);
 
         return {
-          user: { email: user.email, fullName: user.fullName },
+          user: {
+            receiverId: user._id,
+            email: user.email,
+            fullName: user.fullName,
+          },
           conversationId: conversation._id,
         };
       })
@@ -198,7 +202,7 @@ app.get("/api/message/:conversationId", async (req, res) => {
       messages.map(async (message) => {
         const user = await Users.findById(message.senderId);
         return {
-          user: { email: user.email, fullName: user.fullName },
+          user: { id: user._id, email: user.email, fullName: user.fullName },
           message: message.message,
         };
       })
