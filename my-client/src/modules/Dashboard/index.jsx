@@ -7,48 +7,15 @@ import { LuCirclePlus } from "react-icons/lu";
 import { useEffect } from "react";
 
 const Dashboard = () => {
-  // const contacts = [
-  //   {
-  //     name: "Alice Johnson",
-  //     status: "Online",
-  //     img: "https://randomuser.me/api/portraits/women/1.jpg",
-  //   },
-  //   {
-  //     name: "Michael Brown",
-  //     status: "Offline",
-  //     img: "https://randomuser.me/api/portraits/men/2.jpg",
-  //   },
-  //   {
-  //     name: "Sophia Davis",
-  //     status: "Busy",
-  //     img: "https://randomuser.me/api/portraits/women/3.jpg",
-  //   },
-  //   {
-  //     name: "James Wilson",
-  //     status: "Away",
-  //     img: "https://randomuser.me/api/portraits/men/4.jpg",
-  //   },
-  //   {
-  //     name: "Olivia Martinez",
-  //     status: "Online",
-  //     img: "https://randomuser.me/api/portraits/women/5.jpg",
-  //   },
-  //   {
-  //     name: "Ethan Taylor",
-  //     status: "Offline",
-  //     img: "https://randomuser.me/api/portraits/men/6.jpg",
-  //   },
-  //   {
-  //     name: "Ava Anderson",
-  //     status: "Busy",
-  //     img: "https://randomuser.me/api/portraits/women/7.jpg",
-  //   },
-  //   {
-  //     name: "Liam Thomas",
-  //     status: "Online",
-  //     img: "https://randomuser.me/api/portraits/men/8.jpg",
-  //   },
-  // ];
+  const [conversations, setConversations] = useState([]);
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user:detail"))
+  );
+  const [messages, setMessages] = useState({});
+  const [message, setMessage] = useState();
+  console.log(user, "user");
+  console.log(conversations, "conversations");
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const loggedInUser = JSON.parse(localStorage.getItem("user:detail"));
@@ -69,15 +36,20 @@ const Dashboard = () => {
     };
     fetchConversations();
   }, []);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const res = await fetch(`http://localhost:8000/api/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const resData = await res.json();
 
-  const [conversations, setConversations] = useState([]);
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user:detail"))
-  );
-  const [messages, setMessages] = useState({});
-  const [message, setMessage] = useState();
-  console.log(user, "user");
-  console.log(conversations, "conversations");
+      setUsers(resData);
+    };
+    fetchUsers();
+  }, []);
 
   const fetchMessages = async (conversationId, user) => {
     const res = await fetch(
@@ -224,11 +196,36 @@ const Dashboard = () => {
         )}
       </div>
       <div className="w-[25%] h-screen border-r border-gray-500 ">
-        <div>
-          <img></img>
-          <div>
-            <h3></h3>
-          </div>
+        <h2 className="font-semibold mb-2 text-blue-400 text-start px-5 py-16">
+          People
+        </h2>
+        <div className="space-y-3">
+          {users.length > 0 ? (
+            users.map(({ userId, user }) => {
+              return (
+                <div
+                  className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer"
+                  onClick={() => fetchMessages("new", user)}
+                >
+                  <img
+                    src="https://randomuser.me/api/portraits/men/8.jpg"
+                    alt={"name"}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div className="flex flex-col">
+                    <h4 className="font-medium text-start">{user?.fullName}</h4>
+                    <p className="text-sm text-gray-500 text-start">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center text-lg font-semibold mt-24">
+              No conversation
+            </div>
+          )}
         </div>
       </div>
     </div>
