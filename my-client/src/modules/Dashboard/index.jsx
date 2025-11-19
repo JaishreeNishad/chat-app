@@ -38,7 +38,7 @@ const Dashboard = () => {
   }, []);
   useEffect(() => {
     const fetchUsers = async () => {
-      const res = await fetch(`http://localhost:8000/api/users`, {
+      const res = await fetch(`http://localhost:8000/api/users/${user?.id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -51,11 +51,12 @@ const Dashboard = () => {
     fetchUsers();
   }, []);
 
-  const fetchMessages = async (conversationId, user) => {
+  const fetchMessages = async (conversationId, receiver) => {
     const res = await fetch(
-      `http://localhost:8000/api/message/${conversationId}`,
+      `http://localhost:8000/api/message/${conversationId}?senderId=${user?.id}&&receiverId=${receiver?.receiverId}`,
       {
         method: "GET",
+
         headers: {
           "Content-Type": "application/json",
         },
@@ -63,7 +64,7 @@ const Dashboard = () => {
     );
     const resData = await res.json();
     console.log(resData, "resData");
-    setMessages({ messages: resData, receiver: user, conversationId });
+    setMessages({ messages: resData, receiver, conversationId });
   };
 
   const sendMessage = async (e) => {
