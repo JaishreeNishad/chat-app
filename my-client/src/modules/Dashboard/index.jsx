@@ -5,6 +5,7 @@ import Input from "../../components/Input";
 import { FiSend } from "react-icons/fi";
 import { LuCirclePlus } from "react-icons/lu";
 import { useEffect } from "react";
+import { io } from "socket.io-client";
 
 const Dashboard = () => {
   const [conversations, setConversations] = useState([]);
@@ -13,9 +14,43 @@ const Dashboard = () => {
   );
   const [messages, setMessages] = useState({});
   const [message, setMessage] = useState();
-  console.log(user, "user");
-  console.log(conversations, "conversations");
+
   const [users, setUsers] = useState([]);
+  const [socket, setSocket] = useState(null);
+
+  useEffect(() => {
+    setSocket(io("http://localhost:8080"));
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit("addUser", user?.id);
+
+    socket.on("getUsers", (users) => {
+      console.log("online users:", users);
+    });
+
+    socket.on("getMessage", (data) => {
+      console.log("message received:", data);
+
+      setMessages((prev) => ({
+        ...prev,
+        messages: [
+          ...(prev?.messages || []),
+          {
+            user: data.user,
+            message: data.message,
+          },
+        ],
+      }));
+    });
+
+    return () => {
+      socket.off("getUsers");
+      socket.off("getMessage");
+    };
+  }, [socket]);
 
   useEffect(() => {
     const loggedInUser = JSON.parse(localStorage.getItem("user:detail"));
@@ -31,7 +66,7 @@ const Dashboard = () => {
         }
       );
       const resData = await res.json();
-      console.log(resData, "resData");
+
       setConversations(resData);
     };
     fetchConversations();
@@ -68,6 +103,12 @@ const Dashboard = () => {
   };
 
   const sendMessage = async (e) => {
+    socket?.emit("sendMessage", {
+      senderId: user?.id,
+      receiverId: messages?.receiver?.receiverId,
+      message,
+      conversationId: messages?.conversationId,
+    });
     const res = await fetch(`http://localhost:8000/api/message`, {
       method: "POST",
       headers: {

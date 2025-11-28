@@ -3,7 +3,11 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const app = express();
 const cors = require("cors");
-
+const io = require("socket.io")(8080, {
+  cors: {
+    origin: "http://localhost:5173",
+  },
+});
 //connect db
 require("./dp/connection");
 
@@ -18,6 +22,54 @@ app.use(express.json());
 app.use(cors()); // **IMPORTANT: Add this to parse JSON body from Postman**
 
 const port = process.env.PORT || 8000;
+
+let users = [];
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // ADD USER
+  socket.on("addUser", (userId) => {
+    const exists = users.find((u) => u.userId === userId);
+
+    if (!exists) {
+      users.push({ userId, socketId: socket.id });
+      console.log(users, "users list");
+      io.emit("getUsers", users);
+    }
+  });
+
+  // USER DISCONNECT
+  socket.on(
+    "sendMessage",
+    async ({ senderId, receiverId, message, conversationId }) => {
+      const receiver = users.find((u) => u.userId === receiverId);
+      const sender = users.find((u) => u.userId === senderId);
+
+      const user = await Users.findById(senderId);
+
+      const payload = {
+        senderId,
+        message,
+        conversationId,
+        receiverId,
+        user: { id: user._id, email: user.email, fullName: user.fullName },
+      };
+
+      // 👉 Send message to RECEIVER
+      if (receiver) io.to(receiver.socketId).emit("getMessage", payload);
+
+      // 👉 Send message to SENDER (real-time updates on your own screen)
+      io.to(sender.socketId).emit("getMessage", payload);
+    }
+  );
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+    users = users.filter((u) => u.socketId !== socket.id);
+    io.emit("getUsers", users);
+  });
+});
 
 //app routes
 app.get("/", (req, res) => {
